@@ -5,12 +5,18 @@ use serde::de::Visitor;
 use std::io::Read;
 use byteorder::{LittleEndian, ReadBytesExt};
 
-struct SbeDeser<R: Read> {
-    reader: R
+pub struct SbeDeser<R: Read> {
+    reader: R,
+}
+
+impl<R: Read> SbeDeser<R> {
+    pub fn from_reader(reader: R) -> Self {
+        SbeDeser { reader }
+    }
 }
 
 #[derive(Debug)]
-enum Error {
+pub enum Error {
     NotSupported,
     Io(std::io::Error),
 }
@@ -37,8 +43,7 @@ impl serde::de::Error for Error {
     }
 }
 
-type Result<V> = std::result::Result<V, Error>;
-
+pub type Result<V> = std::result::Result<V, Error>;
 
 impl<'de, R> Deserializer<'de> for &mut SbeDeser<R> where R: Read {
     type Error = Error;
@@ -427,7 +432,7 @@ mod tests {
             0, 0, 0, 80
         ];
 
-        let mut deser = SbeDeser { reader: Cursor::new(&bytes[..]) };
+        let mut deser = SbeDeser::from_reader(Cursor::new(&bytes[..]));
         let t = Test1::deserialize(&mut deser).unwrap();
         println!("{:?}", t);
         assert_eq!(t.command, NewOrderSingle {
